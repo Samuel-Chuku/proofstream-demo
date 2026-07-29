@@ -40,7 +40,7 @@ export type TransferRecord = {
   from: string;
   to: string;
   amount: number;
-  at: number;
+  timestamp: number;
 };
 
 /** Append a completed transfer to the log. Never mutates the existing log. */
@@ -49,12 +49,33 @@ export function recordTransfer(
   from: Account,
   to: Account,
   amount: number,
-  at: number = Date.now(),
+  timestamp: number = Date.now(),
 ): TransferRecord[] {
-  return [...records, { from: from.id, to: to.id, amount, at }];
+  return [...records, { from: from.id, to: to.id, amount, timestamp }];
 }
 
 /** Every record this account either sent or received, oldest first. */
 export function history(records: TransferRecord[], accountId: string): TransferRecord[] {
   return records.filter((r) => r.from === accountId || r.to === accountId);
+}
+
+/**
+ * Move funds and log the movement in one step. This is the entry point that
+ * guarantees the history stays truthful: transfer() throws on a rejected
+ * transfer, so the append is never reached and a blocked overdraft leaves no
+ * record behind.
+ */
+export function applyTransfer(
+  records: TransferRecord[],
+  from: Account,
+  to: Account,
+  amount: number,
+  timestamp: number = Date.now(),
+): { from: Account; to: Account; records: TransferRecord[] } {
+  const [nextFrom, nextTo] = transfer(from, to, amount);
+  return {
+    from: nextFrom,
+    to: nextTo,
+    records: recordTransfer(records, from, to, amount, timestamp),
+  };
 }
