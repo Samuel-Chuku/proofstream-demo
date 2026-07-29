@@ -35,3 +35,26 @@ export function transfer(from: Account, to: Account, amount: number): [Account, 
     { ...to, balance: to.balance + amount },
   ];
 }
+
+export type TransferRecord = {
+  from: string;
+  to: string;
+  amount: number;
+  at: number;
+};
+
+/** Append a completed transfer to the log. Never mutates the existing log. */
+export function recordTransfer(
+  records: TransferRecord[],
+  from: Account,
+  to: Account,
+  amount: number,
+  at: number = Date.now(),
+): TransferRecord[] {
+  return [...records, { from: from.id, to: to.id, amount, at }];
+}
+
+/** Every record this account either sent or received, oldest first. */
+export function history(records: TransferRecord[], accountId: string): TransferRecord[] {
+  return records.filter((r) => r.from === accountId || r.to === accountId);
+}
