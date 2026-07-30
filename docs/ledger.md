@@ -1,9 +1,6 @@
 # Ledger
 
-The ledger tracks accounts and transfers between them.
+`transfer(from, to, amount)` moves value between accounts.
 
-## Functions
-
-- `transfer(from, to, amount)` — moves value, throws on overdraft
-- `applyTransfer(records, from, to, amount)` — transfer plus history append
-- `history(records, accountId)` — records touching an account
+It must reject a transfer that would overdraw the sending account, and must
+reject non-positive amounts.
