@@ -13,3 +13,7 @@ export type Account = { id: string; balance: number };
 export function balanceOf(account: Account): number {
   return account.balance;
 }
+
+export function accountBalance(account: Account): number {
+  return balanceOf(account);
+}
