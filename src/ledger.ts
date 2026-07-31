@@ -18,10 +18,6 @@ export function canCover(account: Account, amount: number): boolean {
   return account.balance >= amount;
 }
 
-/**
- * Move value between two accounts. Rejects non-positive amounts, self
- * transfers, and any transfer that would overdraw the sender.
- */
 export function transfer(from: Account, to: Account, amount: number): [Account, Account] {
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error(`transfer amount must be a positive number, got ${amount}`);
@@ -38,4 +34,26 @@ export function transfer(from: Account, to: Account, amount: number): [Account, 
     { ...from, balance: from.balance - amount },
     { ...to, balance: to.balance + amount },
   ];
+}
+
+export type TransferRecord = {
+  from: string;
+  to: string;
+  amount: number;
+  timestamp: number;
+};
+
+export function recordTransfer(
+  records: TransferRecord[],
+  from: Account,
+  to: Account,
+  amount: number,
+  timestamp: number = Date.now(),
+): TransferRecord[] {
+  return [...records, { from: from.id, to: to.id, amount, timestamp }];
+}
+
+/** Returns the account's records. */
+export function history(records: TransferRecord[], _accountId: string): TransferRecord[] {
+  return records;
 }
