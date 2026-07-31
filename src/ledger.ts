@@ -18,11 +18,27 @@ export function canCover(account: Account, amount: number): boolean {
   return account.balance >= amount;
 }
 
+
+export type TransferRecord = {
+  from: string;
+  to: string;
+  amount: number;
+  timestamp: number;
+};
+
 /**
- * Move value between two accounts. Rejects non-positive amounts, self
- * transfers, and any transfer that would overdraw the sender.
+ * The only way to move value. Validates, moves, and appends to the history in
+ * one step, so every successful transfer is recorded by construction. Throws on
+ * a rejected transfer, so the append is never reached and a blocked overdraft
+ * leaves no record behind.
  */
-export function transfer(from: Account, to: Account, amount: number): [Account, Account] {
+export function transfer(
+  records: TransferRecord[],
+  from: Account,
+  to: Account,
+  amount: number,
+  timestamp: number = Date.now(),
+): { from: Account; to: Account; records: TransferRecord[] } {
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error(`transfer amount must be a positive number, got ${amount}`);
   }
@@ -34,8 +50,14 @@ export function transfer(from: Account, to: Account, amount: number): [Account, 
       `overdraft blocked: ${from.id} holds ${from.balance} but ${amount} was requested`,
     );
   }
-  return [
-    { ...from, balance: from.balance - amount },
-    { ...to, balance: to.balance + amount },
-  ];
+  return {
+    from: { ...from, balance: from.balance - amount },
+    to: { ...to, balance: to.balance + amount },
+    records: [...records, { from: from.id, to: to.id, amount, timestamp }],
+  };
+}
+
+/** Every record this account either sent or received, oldest first. */
+export function history(records: TransferRecord[], accountId: string): TransferRecord[] {
+  return records.filter((r) => r.from === accountId || r.to === accountId);
 }
